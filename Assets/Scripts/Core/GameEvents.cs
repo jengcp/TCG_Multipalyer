@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using TCG.Campaign;
+using TCG.Characters;
 using TCG.Currency;
 using TCG.Inventory;
 using TCG.Inventory.Deck;
@@ -63,6 +66,22 @@ namespace TCG.Core
 
         // ── Match — end ───────────────────────────────────────────────────────────
         public static event Action<MatchResult, MatchState, MatchRewards> OnMatchEnded;
+
+        // ── Campaign ─────────────────────────────────────────────────────────────
+        /// <summary>Fires when a stage match ends and stars have been evaluated.</summary>
+        public static event Action<CampaignStageResult> OnCampaignStageCompleted;
+        /// <summary>Fires when a previously-locked stage becomes playable.</summary>
+        public static event Action<string>               OnCampaignStageUnlocked;  // stageId
+        /// <summary>Fires when gemstones are awarded for earning all 3 stars on a stage.</summary>
+        public static event Action<int>                  OnGemstoneRewardGranted;
+
+        // ── Gacha ─────────────────────────────────────────────────────────────────
+        /// <summary>Fires after a gacha pull completes with the list of cards obtained.</summary>
+        public static event Action<List<CardData>>       OnGachaPullCompleted;
+
+        // ── Characters ───────────────────────────────────────────────────────────
+        /// <summary>Fires when a character is unlocked (starter or purchased).</summary>
+        public static event Action<CharacterData>        OnCharacterUnlocked;
 
         // ── Quest ────────────────────────────────────────────────────────────────
         public static event Action<QuestProgress> OnQuestCompleted;
@@ -162,6 +181,21 @@ namespace TCG.Core
 
         public static void RaiseMatchEnded(MatchResult result, MatchState state, MatchRewards rewards)
             => OnMatchEnded?.Invoke(result, state, rewards);
+
+        public static void RaiseCampaignStageCompleted(CampaignStageResult result)
+            => OnCampaignStageCompleted?.Invoke(result);
+
+        public static void RaiseCampaignStageUnlocked(string stageId)
+            => OnCampaignStageUnlocked?.Invoke(stageId);
+
+        public static void RaiseGemstoneRewardGranted(int amount)
+            => OnGemstoneRewardGranted?.Invoke(amount);
+
+        public static void RaiseGachaPullCompleted(List<CardData> cards)
+            => OnGachaPullCompleted?.Invoke(cards);
+
+        public static void RaiseCharacterUnlocked(CharacterData character)
+            => OnCharacterUnlocked?.Invoke(character);
 
         public static void RaiseQuestCompleted(QuestProgress quest)
             => OnQuestCompleted?.Invoke(quest);

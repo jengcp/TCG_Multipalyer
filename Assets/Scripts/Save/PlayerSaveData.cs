@@ -26,6 +26,15 @@ namespace TCG.Save
 
         // Shop
         public ShopSaveData shop = new();
+
+        // Campaign
+        public CampaignSaveData campaign = new();
+
+        // Gacha pity counters (one entry per pool)
+        public List<GachaPitySaveData> gachaPity = new();
+
+        // Characters
+        public List<string> unlockedCharacterIds = new();
     }
 
     // ─── Inventory ─────────────────────────────────────────────────────────────
@@ -111,5 +120,35 @@ namespace TCG.Save
         public string listingId;
         public int    remainingStock;
         public bool   isPurchased;
+    }
+
+    // ─── Campaign ──────────────────────────────────────────────────────────────
+
+    [Serializable]
+    public class CampaignSaveData
+    {
+        public List<StageSaveEntry> stages = new();
+    }
+
+    [Serializable]
+    public class StageSaveEntry
+    {
+        public string stageId;
+        /// <summary>Stars earned on this stage (0–3).</summary>
+        public int    starsEarned;
+        /// <summary>True once the stage has been unlocked (prerequisites met).</summary>
+        public bool   isUnlocked;
+    }
+
+    // ─── Gacha Pity ────────────────────────────────────────────────────────────
+
+    [Serializable]
+    public class GachaPitySaveData
+    {
+        public string poolId;
+        /// <summary>Consecutive pulls since the last Rare-or-better card.</summary>
+        public int    pullsSinceRare;
+        /// <summary>Consecutive pulls since the last Epic-or-better card.</summary>
+        public int    pullsSinceEpic;
     }
 }

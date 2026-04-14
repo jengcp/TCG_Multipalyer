@@ -21,6 +21,9 @@ namespace TCG.Save
         // Quests
         public QuestsSaveData quests = new();
 
+        // Match History
+        public MatchHistorySaveData matchHistory = new();
+
         // Shop
         public ShopSaveData shop = new();
     }
@@ -71,6 +74,23 @@ namespace TCG.Save
         public int        status;           // QuestStatus cast to int
         public long       activatedTicks;
         public List<int>  objectiveCounts = new();
+    }
+
+    // ─── Match History ─────────────────────────────────────────────────────────
+
+    [Serializable]
+    public class MatchHistorySaveData
+    {
+        public List<MatchRecordEntry> entries = new();
+    }
+
+    [Serializable]
+    public class MatchRecordEntry
+    {
+        public long dateTicks;
+        public int  result;      // MatchResult cast to int
+        public int  turnsPlayed;
+        public int  goldEarned;
     }
 
     // ─── Shop ──────────────────────────────────────────────────────────────────

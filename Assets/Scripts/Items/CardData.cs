@@ -36,6 +36,10 @@ namespace TCG.Items
         [Tooltip("Set or expansion this card belongs to.")]
         public string cardSet;
 
+        [Header("Effects")]
+        [Tooltip("Effects applied when this card is played. Leave null for cards with no active effect.")]
+        public TCG.Match.Effects.CardEffectData effectData;
+
         private void Awake()
         {
             itemType = ItemType.Card;

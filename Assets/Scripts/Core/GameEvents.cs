@@ -3,6 +3,8 @@ using TCG.Currency;
 using TCG.Inventory;
 using TCG.Inventory.Deck;
 using TCG.Items;
+using TCG.Match;
+using TCG.Match.Effects;
 using TCG.Quest;
 using TCG.Shop;
 
@@ -10,7 +12,7 @@ namespace TCG.Core
 {
     /// <summary>
     /// Central static event bus for the entire game.
-    /// All systems communicate through here — no direct references required.
+    /// All systems communicate through here — no direct MonoBehaviour references cross systems.
     /// </summary>
     public static class GameEvents
     {
@@ -34,30 +36,42 @@ namespace TCG.Core
         public static event Action<DeckData>  OnDeckChanged;
         public static event Action<string>    OnDeckDeleted;
 
-        // ── Match (raised by the game session system) ────────────────────────────
-        /// <summary>
-        /// Raised when a match ends.
-        /// Parameters: won, primaryElement (most-used), primaryClass (most-used)
-        /// </summary>
+        // ── Match — summary events (for Quest tracking) ──────────────────────────
         public static event Action<bool, CardElement, CardClass> OnMatchCompleted;
-        /// <summary>Raised each time a card is played during a match.</summary>
         public static event Action<CardData>  OnCardPlayed;
-        /// <summary>Raised when a card pack is opened (after cards are distributed).</summary>
         public static event Action<PackData>  OnPackOpened;
-        /// <summary>Raised once per calendar-day login.</summary>
         public static event Action            OnDayLogin;
-        /// <summary>Raised whenever Gold is added to the player's wallet.</summary>
         public static event Action<int>       OnGoldEarned;
 
-        // ── Quest ───────────────────────────────────────────────────────────────
+        // ── Match — lifecycle ────────────────────────────────────────────────────
+        public static event Action<MatchState>  OnMatchStarted;
+        public static event Action<int, int>    OnTurnStarted;   // turnNumber, playerIndex
+        public static event Action<MatchPhase>  OnPhaseChanged;
+        public static event Action<int, int>    OnTurnEnded;     // turnNumber, playerIndex
+
+        // ── Match — battlefield ──────────────────────────────────────────────────
+        public static event Action<CardInstance, int, int> OnCardPlacedOnBattlefield; // card, playerIdx, slotIdx
+        public static event Action<CardInstance, int>      OnCardReturnedToHand;
+        public static event Action<CardInstance, int>      OnCardSentToGraveyard;
+        public static event Action<CardInstance, int>      OnCardDrawn;
+
+        // ── Match — combat ───────────────────────────────────────────────────────
+        public static event Action<CardInstance, int>       OnAttackDeclared;      // attacker, attackerPlayerIdx
+        public static event Action<int, CardInstance, int>  OnDamageDealt;         // dmg, target (null=direct), targetPlayerIdx
+        public static event Action<int, int, int>           OnPlayerHealthChanged; // playerIdx, newHealth, delta
+        public static event Action<CardInstance, int>       OnCreatureDied;        // card, playerIdx
+
+        // ── Match — end ───────────────────────────────────────────────────────────
+        public static event Action<MatchResult, MatchState, MatchRewards> OnMatchEnded;
+
+        // ── Quest ────────────────────────────────────────────────────────────────
         public static event Action<QuestProgress> OnQuestCompleted;
         public static event Action<QuestProgress> OnQuestClaimed;
         public static event Action<QuestProgress> OnQuestExpired;
         public static event Action<QuestCategory> OnQuestRotationRefreshed;
-        /// <summary>Raised when an XP reward is granted (reserved for future level system).</summary>
         public static event Action<int>           OnXPEarned;
 
-        // ── Raisers ─────────────────────────────────────────────────────────────
+        // ── Raisers ──────────────────────────────────────────────────────────────
 
         public static void RaiseCurrencyChanged(CurrencyType type, int newAmount)
             => OnCurrencyChanged?.Invoke(type, newAmount);
@@ -109,6 +123,45 @@ namespace TCG.Core
 
         public static void RaiseGoldEarned(int amount)
             => OnGoldEarned?.Invoke(amount);
+
+        public static void RaiseMatchStarted(MatchState state)
+            => OnMatchStarted?.Invoke(state);
+
+        public static void RaiseTurnStarted(int turn, int playerIndex)
+            => OnTurnStarted?.Invoke(turn, playerIndex);
+
+        public static void RaisePhaseChanged(MatchPhase phase)
+            => OnPhaseChanged?.Invoke(phase);
+
+        public static void RaiseTurnEnded(int turn, int playerIndex)
+            => OnTurnEnded?.Invoke(turn, playerIndex);
+
+        public static void RaiseCardPlacedOnBattlefield(CardInstance card, int playerIndex, int slotIndex)
+            => OnCardPlacedOnBattlefield?.Invoke(card, playerIndex, slotIndex);
+
+        public static void RaiseCardReturnedToHand(CardInstance card, int playerIndex)
+            => OnCardReturnedToHand?.Invoke(card, playerIndex);
+
+        public static void RaiseCardSentToGraveyard(CardInstance card, int playerIndex)
+            => OnCardSentToGraveyard?.Invoke(card, playerIndex);
+
+        public static void RaiseCardDrawn(CardInstance card, int playerIndex)
+            => OnCardDrawn?.Invoke(card, playerIndex);
+
+        public static void RaiseAttackDeclared(CardInstance attacker, int attackerPlayerIndex)
+            => OnAttackDeclared?.Invoke(attacker, attackerPlayerIndex);
+
+        public static void RaiseDamageDealt(int damage, CardInstance target, int targetPlayerIndex)
+            => OnDamageDealt?.Invoke(damage, target, targetPlayerIndex);
+
+        public static void RaisePlayerHealthChanged(int playerIndex, int newHealth, int delta)
+            => OnPlayerHealthChanged?.Invoke(playerIndex, newHealth, delta);
+
+        public static void RaiseCreatureDied(CardInstance card, int playerIndex)
+            => OnCreatureDied?.Invoke(card, playerIndex);
+
+        public static void RaiseMatchEnded(MatchResult result, MatchState state, MatchRewards rewards)
+            => OnMatchEnded?.Invoke(result, state, rewards);
 
         public static void RaiseQuestCompleted(QuestProgress quest)
             => OnQuestCompleted?.Invoke(quest);

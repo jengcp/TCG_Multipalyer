@@ -4,6 +4,7 @@ using TMPro;
 using TCG.Core;
 using TCG.Currency;
 using TCG.Inventory.Deck;
+using TCG.Navigation;
 using TCG.Ranked;
 
 namespace TCG.UI.Ranked
@@ -123,6 +124,8 @@ namespace TCG.UI.Ranked
                 return;
             }
 
+            // Show the match panel before starting so MatchUI can subscribe to OnMatchStarted.
+            PanelNavigator.Instance?.Show(PanelNavigator.MatchKey);
             RankedManager.Instance.StartRankedMatch(selectedDeck);
         }
 

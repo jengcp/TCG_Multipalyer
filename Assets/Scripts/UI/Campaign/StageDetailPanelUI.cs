@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using TMPro;
 using TCG.Campaign;
 using TCG.Inventory.Deck;
+using TCG.Navigation;
 
 namespace TCG.UI.Campaign
 {
@@ -140,6 +141,8 @@ namespace TCG.UI.Campaign
         {
             if (_stage == null || CampaignManager.Instance == null) return;
             Hide();
+            // Show the match panel before starting so MatchUI can subscribe to OnMatchStarted.
+            PanelNavigator.Instance?.Show(PanelNavigator.MatchKey);
             CampaignManager.Instance.StartStage(_stage);
         }
     }

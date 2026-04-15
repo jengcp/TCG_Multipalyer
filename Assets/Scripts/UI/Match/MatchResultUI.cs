@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 using TCG.Match;
+using TCG.Navigation;
 
 namespace TCG.UI.Match
 {
@@ -57,7 +58,15 @@ namespace TCG.UI.Match
 
         private void OnContinueClicked()
         {
-            SceneManager.LoadScene(mainMenuSceneName);
+            // Prefer in-scene panel navigation; fall back to scene loading if not available.
+            if (PanelNavigator.Instance != null)
+            {
+                PanelNavigator.Instance.ShowHome();
+            }
+            else if (!string.IsNullOrEmpty(mainMenuSceneName))
+            {
+                SceneManager.LoadScene(mainMenuSceneName);
+            }
         }
     }
 }

@@ -35,6 +35,9 @@ namespace TCG.Save
 
         // Characters
         public List<string> unlockedCharacterIds = new();
+
+        // Ranked
+        public RankedSaveData ranked = new();
     }
 
     // ─── Inventory ─────────────────────────────────────────────────────────────
@@ -150,5 +153,36 @@ namespace TCG.Save
         public int    pullsSinceRare;
         /// <summary>Consecutive pulls since the last Epic-or-better card.</summary>
         public int    pullsSinceEpic;
+    }
+
+    // ─── Ranked ────────────────────────────────────────────────────────────────
+
+    [Serializable]
+    public class RankedSaveData
+    {
+        /// <summary>(int)RankTier — starts at Bronze (0).</summary>
+        public int  tier              = 0;
+        /// <summary>(int)RankDivision — starts at DivIII (0).</summary>
+        public int  division          = 0;
+        /// <summary>RP within the current division (0–99; uncapped for Master).</summary>
+        public int  rp                = 0;
+
+        /// <summary>Highest tier reached this season (int cast of RankTier).</summary>
+        public int  peakTier          = 0;
+        /// <summary>Division at peak tier.</summary>
+        public int  peakDivision      = 0;
+
+        public int  wins              = 0;
+        public int  losses            = 0;
+        public int  draws             = 0;
+
+        /// <summary>
+        /// When true, the next loss at 0 RP is forgiven instead of causing demotion.
+        /// Granted automatically on each promotion.
+        /// </summary>
+        public bool hasDemotionShield = false;
+
+        /// <summary>SeasonId of the season this data belongs to.</summary>
+        public string currentSeasonId = string.Empty;
     }
 }

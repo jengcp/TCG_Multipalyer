@@ -9,6 +9,7 @@ using TCG.Items;
 using TCG.Match;
 using TCG.Match.Effects;
 using TCG.Quest;
+using TCG.Ranked;
 using TCG.Shop;
 
 namespace TCG.Core
@@ -89,6 +90,12 @@ namespace TCG.Core
         public static event Action<QuestProgress> OnQuestExpired;
         public static event Action<QuestCategory> OnQuestRotationRefreshed;
         public static event Action<int>           OnXPEarned;
+
+        // ── Ranked ───────────────────────────────────────────────────────────────
+        /// <summary>Fires after a ranked match resolves and RP / rank have been updated.</summary>
+        public static event Action<RankedMatchOutcome> OnRankedMatchResolved;
+        /// <summary>Fires when a season ends. Carries the player's peak tier and gems rewarded.</summary>
+        public static event Action<RankTier, int>      OnSeasonEnded;
 
         // ── Raisers ──────────────────────────────────────────────────────────────
 
@@ -211,5 +218,11 @@ namespace TCG.Core
 
         public static void RaiseXPEarned(int amount)
             => OnXPEarned?.Invoke(amount);
+
+        public static void RaiseRankedMatchResolved(RankedMatchOutcome outcome)
+            => OnRankedMatchResolved?.Invoke(outcome);
+
+        public static void RaiseSeasonEnded(RankTier peakTier, int gemReward)
+            => OnSeasonEnded?.Invoke(peakTier, gemReward);
     }
 }

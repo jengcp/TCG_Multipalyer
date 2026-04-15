@@ -38,6 +38,9 @@ namespace TCG.Save
 
         // Ranked
         public RankedSaveData ranked = new();
+
+        // Narrative
+        public NarrativeSaveData narrative = new();
     }
 
     // ─── Inventory ─────────────────────────────────────────────────────────────
@@ -153,6 +156,17 @@ namespace TCG.Save
         public int    pullsSinceRare;
         /// <summary>Consecutive pulls since the last Epic-or-better card.</summary>
         public int    pullsSinceEpic;
+    }
+
+    // ─── Ranked ────────────────────────────────────────────────────────────────
+
+    // ─── Narrative ─────────────────────────────────────────────────────────────
+
+    [Serializable]
+    public class NarrativeSaveData
+    {
+        /// <summary>IDs of all <see cref="TCG.Narrative.NarrativeEventData"/> events that have fired.</summary>
+        public List<string> seenEventIds = new();
     }
 
     // ─── Ranked ────────────────────────────────────────────────────────────────

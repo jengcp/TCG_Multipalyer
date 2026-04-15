@@ -9,6 +9,7 @@ using TCG.Inventory.Deck;
 using TCG.Items;
 using TCG.Match;
 using TCG.Match.Effects;
+using TCG.Narrative;
 using TCG.Quest;
 using TCG.Ranked;
 using TCG.Shop;
@@ -105,6 +106,10 @@ namespace TCG.Core
         public static event Action<CutsceneData> OnCutsceneEnded;
         /// <summary>Fires at the start of each individual beat within a cutscene.</summary>
         public static event Action<CutsceneBeat> OnCutsceneBeatStarted;
+
+        // ── Narrative ─────────────────────────────────────────────────────────────
+        /// <summary>Fires when a narrative event fires for the first time (or is manually triggered).</summary>
+        public static event Action<NarrativeEventData> OnNarrativeEventTriggered;
 
         // ── Raisers ──────────────────────────────────────────────────────────────
 
@@ -242,5 +247,8 @@ namespace TCG.Core
 
         public static void RaiseCutsceneBeatStarted(CutsceneBeat beat)
             => OnCutsceneBeatStarted?.Invoke(beat);
+
+        public static void RaiseNarrativeEventTriggered(NarrativeEventData ev)
+            => OnNarrativeEventTriggered?.Invoke(ev);
     }
 }

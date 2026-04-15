@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using TCG.Cutscene;
 using TCG.Items;
 
 namespace TCG.Campaign
@@ -46,6 +47,12 @@ namespace TCG.Campaign
         [Header("Full-Star Gemstone Bonus")]
         [Tooltip("Gemstones awarded when all 3 stars are earned for the first time.")]
         public int gemstoneOnFullStars = 50;
+
+        [Header("Storytelling")]
+        [Tooltip("Cutscene played before the match begins. Leave null for no intro cutscene.")]
+        public CutsceneData preStageCutscene;
+        [Tooltip("Cutscene played after winning this stage for the first time. Leave null for no outro cutscene.")]
+        public CutsceneData postStageCutscene;
     }
 
     /// <summary>Card + copy count for building an AI deck from a stage asset.</summary>

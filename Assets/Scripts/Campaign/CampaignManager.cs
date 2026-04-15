@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEngine;
 using TCG.Core;
 using TCG.Currency;
+using TCG.Cutscene;
 using TCG.Inventory;
 using TCG.Inventory.Deck;
 using TCG.Items;
@@ -78,8 +79,7 @@ namespace TCG.Campaign
         public void SetPlayerDeck(DeckData deck) => _playerDeck = deck;
 
         /// <summary>
-        /// Builds an AI deck from the stage data and launches a match via MatchManager.
-        /// Subscribes to match-end and creature-death events for star evaluation.
+        /// Starts a campaign stage — plays the pre-stage cutscene first (if any), then launches the match.
         /// </summary>
         public void StartStage(CampaignStageData stage)
         {
@@ -89,6 +89,15 @@ namespace TCG.Campaign
             _activeStage         = stage;
             _localCreatureDeaths = 0;
 
+            if (stage.preStageCutscene != null && CutsceneManager.Instance != null)
+                CutsceneManager.Instance.Play(stage.preStageCutscene, () => LaunchMatch(stage));
+            else
+                LaunchMatch(stage);
+        }
+
+        // Subscribes to match events and calls MatchManager.StartMatch.
+        private void LaunchMatch(CampaignStageData stage)
+        {
             GameEvents.OnMatchEnded    += OnMatchEnded;
             GameEvents.OnCreatureDied  += OnCreatureDied;
 
@@ -161,7 +170,12 @@ namespace TCG.Campaign
                 MatchWon            = won
             };
 
-            GameEvents.RaiseCampaignStageCompleted(stageResult);
+            // Play post-stage cutscene on first-time clear, then fire the stage-completed event.
+            if (won && prevStars == 0 && stage.postStageCutscene != null && CutsceneManager.Instance != null)
+                CutsceneManager.Instance.Play(stage.postStageCutscene,
+                    () => GameEvents.RaiseCampaignStageCompleted(stageResult));
+            else
+                GameEvents.RaiseCampaignStageCompleted(stageResult);
         }
 
         private void OnCreatureDied(TCG.Match.CardInstance card, int playerIndex)

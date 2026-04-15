@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TCG.Campaign;
 using TCG.Characters;
 using TCG.Currency;
+using TCG.Cutscene;
 using TCG.Inventory;
 using TCG.Inventory.Deck;
 using TCG.Items;
@@ -96,6 +97,14 @@ namespace TCG.Core
         public static event Action<RankedMatchOutcome> OnRankedMatchResolved;
         /// <summary>Fires when a season ends. Carries the player's peak tier and gems rewarded.</summary>
         public static event Action<RankTier, int>      OnSeasonEnded;
+
+        // ── Cutscene ─────────────────────────────────────────────────────────────
+        /// <summary>Fires when a cutscene begins playing.</summary>
+        public static event Action<CutsceneData> OnCutsceneStarted;
+        /// <summary>Fires when a cutscene finishes (all beats done or skipped).</summary>
+        public static event Action<CutsceneData> OnCutsceneEnded;
+        /// <summary>Fires at the start of each individual beat within a cutscene.</summary>
+        public static event Action<CutsceneBeat> OnCutsceneBeatStarted;
 
         // ── Raisers ──────────────────────────────────────────────────────────────
 
@@ -224,5 +233,14 @@ namespace TCG.Core
 
         public static void RaiseSeasonEnded(RankTier peakTier, int gemReward)
             => OnSeasonEnded?.Invoke(peakTier, gemReward);
+
+        public static void RaiseCutsceneStarted(CutsceneData data)
+            => OnCutsceneStarted?.Invoke(data);
+
+        public static void RaiseCutsceneEnded(CutsceneData data)
+            => OnCutsceneEnded?.Invoke(data);
+
+        public static void RaiseCutsceneBeatStarted(CutsceneBeat beat)
+            => OnCutsceneBeatStarted?.Invoke(beat);
     }
 }

@@ -88,6 +88,15 @@ namespace TCG.UI
 
         private void OnFriendlyCardClicked(CardUI ui)
         {
+            var gameUI = FindObjectOfType<GameUI>();
+
+            // If a character ability targeting flow is active, resolve it
+            if (gameUI != null && gameUI.IsTargeting)
+            {
+                gameUI.ConfirmTarget(ui.Card);
+                return;
+            }
+
             DeselectAttacker();
             _selectedAttackerUI = ui;
             ui.SetSelected(true);
@@ -96,6 +105,15 @@ namespace TCG.UI
 
         private void OnOpponentCardClicked(CardUI ui)
         {
+            var gameUI = FindObjectOfType<GameUI>();
+
+            // Ability targeting can also aim at enemy creatures
+            if (gameUI != null && gameUI.IsTargeting)
+            {
+                gameUI.ConfirmTarget(ui.Card);
+                return;
+            }
+
             playerController.DeclareAttackOnCreature(ui.Card);
         }
 

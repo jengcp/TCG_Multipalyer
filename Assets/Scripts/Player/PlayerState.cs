@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using TCG.Cards;
+using TCG.Characters;
 using TCG.Core;
 
 namespace TCG.Player
@@ -28,8 +29,18 @@ namespace TCG.Player
         public Field Field { get; } = new Field();
         public Graveyard Graveyard { get; } = new Graveyard();
 
+        // Character — may be null if none was chosen
+        public CharacterState Character { get; private set; }
+
+        // Shield — absorbs the next hit of player damage
+        private bool _hasShield;
+
         public bool IsAlive => Health > 0;
         public int TurnNumber { get; private set; }
+
+        // Energy convenience passthrough (delegates to Character when present)
+        public int CurrentEnergy => Character?.CurrentEnergy ?? 0;
+        public int MaxEnergy => Character?.MaxEnergy ?? 0;
 
         public PlayerState(string id, string displayName, bool isLocal = false)
         {
@@ -40,6 +51,11 @@ namespace TCG.Player
             CurrentMana = 0;
             MaxManaThisTurn = 0;
             TurnNumber = 0;
+        }
+
+        public void AssignCharacter(CharacterState character)
+        {
+            Character = character;
         }
 
         // ── Mana ──────────────────────────────────────────────────────────
@@ -71,6 +87,13 @@ namespace TCG.Player
         public void TakeDamage(int amount)
         {
             if (amount <= 0) return;
+
+            if (_hasShield)
+            {
+                _hasShield = false;
+                return;
+            }
+
             Health = Mathf.Max(0, Health - amount);
             GameEvents.PlayerDamaged(this, amount);
         }
@@ -83,6 +106,16 @@ namespace TCG.Player
             GameEvents.PlayerHealed(this, Health - prev);
         }
 
+        public void ApplyShield() => _hasShield = true;
+
+        // ── Turn start ────────────────────────────────────────────────────
+
+        public void OnTurnStart()
+        {
+            StartTurnMana();
+            Character?.OnTurnStart();
+        }
+
         // ── Card actions ──────────────────────────────────────────────────
 
         public bool DrawCard()
@@ -91,7 +124,6 @@ namespace TCG.Player
             var card = Deck.DrawTop();
             if (!Hand.AddCard(card))
             {
-                // Hand full — card is burned
                 Graveyard.AddCard(card);
                 return false;
             }
@@ -107,22 +139,35 @@ namespace TCG.Player
 
         /// <summary>
         /// Returns true if the card was successfully played from hand.
+        /// Applies Arcane mana discount when character is alive.
+        /// Applies Warlord ATK bonus when character is alive.
         /// </summary>
         public bool PlayCard(Card card, Card targetCreature = null)
         {
             if (!Hand.ContainsCard(card)) return false;
-            if (!SpendMana(card.Data.manaCost)) return false;
+
+            int effectiveCost = card.Data.manaCost;
+
+            // Arcane keyword: spells cost 1 less
+            if (!card.Data.IsCreature && Character != null)
+                effectiveCost = Mathf.Max(0, effectiveCost - Character.SpellManaCostReduction);
+
+            if (!SpendMana(effectiveCost)) return false;
 
             Hand.RemoveCard(card);
 
             if (card.Data.IsCreature)
             {
                 if (!Field.AddCard(card)) return false;
+
+                // Warlord keyword: creatures enter with +1 ATK
+                if (Character != null && Character.WarlordEnterBonus > 0)
+                    card.BuffAttack(Character.WarlordEnterBonus);
+
                 GameEvents.CardPlayed(card, this);
             }
             else
             {
-                // Spell / artifact / trap
                 card.SetZone(GameZone.Graveyard);
                 GameEvents.CardPlayed(card, this);
 
@@ -132,6 +177,18 @@ namespace TCG.Player
                 Graveyard.AddCard(card);
             }
 
+            return true;
+        }
+
+        /// <summary>
+        /// Uses a character ability by index. Returns false if not ready or no character.
+        /// </summary>
+        public bool UseCharacterAbility(int abilityIndex, Card targetCard = null)
+        {
+            if (Character == null || !Character.IsAlive) return false;
+            if (!Character.TryConsumeAbility(abilityIndex)) return false;
+
+            CharacterAbilityResolver.Resolve(Character, abilityIndex, targetCard);
             return true;
         }
 

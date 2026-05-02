@@ -99,4 +99,43 @@ namespace TCG.Core
         Shielded,
         Exhausted
     }
+
+    // ── Character system ───────────────────────────────────────────────────
+
+    public enum CharacterEffectType
+    {
+        DealDamageToPlayer,
+        DealDamageToAllCreatures,
+        HealPlayer,
+        HealCharacter,
+        DrawCards,
+        BuffAllFriendlyCreatures,
+        SummonToken,
+        StealCreature,
+        ResurrectCreature,
+        AddEnergy,
+        DrainOpponentEnergy,
+        DoubleManaThisTurn,
+        ShieldPlayerOnce,
+        DestroyAllCreatures,
+        GiveCreatureKeyword
+    }
+
+    public enum AbilityState
+    {
+        Ready,
+        OnCooldown,
+        NotEnoughEnergy,
+        Disabled
+    }
+
+    public enum CharacterKeyword
+    {
+        None,
+        Rapid,        // Can use abilities twice per turn
+        Resilient,    // Immune to first lethal damage each game
+        Energized,    // Gains +1 extra energy per turn
+        Arcane,       // Spells cost 1 less mana while character is alive
+        Warlord        // Friendly creatures enter with +1 ATK
+    }
 }

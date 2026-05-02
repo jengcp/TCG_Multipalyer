@@ -42,6 +42,14 @@ namespace TCG.Network
             NetworkGameManager.Instance.EndTurnServerRpc();
         }
 
+        public void UseCharacterAbility(int abilityIndex, int targetCardIndex = -1,
+            bool targetIsOpponentField = true)
+        {
+            if (!IsOwner) return;
+            NetworkGameManager.Instance.UseCharacterAbilityServerRpc(
+                abilityIndex, targetCardIndex, targetIsOpponentField);
+        }
+
         public void Surrender()
         {
             if (!IsOwner) return;

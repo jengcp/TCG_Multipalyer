@@ -26,7 +26,7 @@ namespace TCG.Game
 
         private void BeginTurn()
         {
-            ActivePlayer.StartTurnMana();
+            ActivePlayer.OnTurnStart(); // handles mana ramp + character energy gain + cooldown ticks
             ActivePlayer.RefreshField();
 
             GameEvents.TurnStarted(ActivePlayer);

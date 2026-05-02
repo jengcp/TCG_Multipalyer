@@ -37,11 +37,20 @@ namespace TCG.UI
         public Button endMainPhaseButton;
         public Button surrenderButton;
 
+        [Header("Character Panels")]
+        public CharacterUI localCharacterUI;
+        public CharacterUI opponentCharacterUI;
+
+        [Header("Targeting")]
+        public GameObject targetingOverlay;
+        public TextMeshProUGUI targetingPromptText;
+
         [Header("Overlays")]
         public GameObject gameOverPanel;
         public TextMeshProUGUI gameOverText;
 
         private PlayerController _localController;
+        private int _pendingAbilityIndex = -1;
 
         private void Start()
         {
@@ -52,6 +61,8 @@ namespace TCG.UI
             surrenderButton.onClick.AddListener(() => _localController.Surrender());
             endMainPhaseButton.onClick.AddListener(
                 () => GameManager.Instance.Turns.EndMainPhase());
+
+            if (targetingOverlay != null) targetingOverlay.SetActive(false);
 
             GameEvents.OnPlayerDamaged += OnPlayerDamaged;
             GameEvents.OnPlayerHealed += OnPlayerHealed;
@@ -122,6 +133,35 @@ namespace TCG.UI
         }
 
         // ── Refresh helpers ────────────────────────────────────────────────
+
+        // ── Character targeting flow ───────────────────────────────────────
+
+        /// <summary>
+        /// Called by CharacterUI when an ability needs a creature target.
+        /// Shows the targeting overlay; the player then clicks a creature.
+        /// </summary>
+        public void BeginTargeting(int abilityIndex)
+        {
+            _pendingAbilityIndex = abilityIndex;
+            if (targetingOverlay != null) targetingOverlay.SetActive(true);
+            if (targetingPromptText != null) targetingPromptText.text = "Select a target creature";
+        }
+
+        /// <summary>Called by FieldUI when a creature is clicked during targeting mode.</summary>
+        public void ConfirmTarget(TCG.Cards.Card targetCard)
+        {
+            if (_pendingAbilityIndex < 0) return;
+            _localController.State.UseCharacterAbility(_pendingAbilityIndex, targetCard);
+            CancelTargeting();
+        }
+
+        public void CancelTargeting()
+        {
+            _pendingAbilityIndex = -1;
+            if (targetingOverlay != null) targetingOverlay.SetActive(false);
+        }
+
+        public bool IsTargeting => _pendingAbilityIndex >= 0;
 
         public void RefreshBoard()
         {

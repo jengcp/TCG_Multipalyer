@@ -1,5 +1,6 @@
 using System;
 using TCG.Cards;
+using TCG.Characters;
 using TCG.Player;
 
 namespace TCG.Core
@@ -21,8 +22,8 @@ namespace TCG.Core
         public static event Action<Card, PlayerState> OnCardReturnedToHand;
 
         // Combat
-        public static event Action<Card, Card> OnAttackDeclared;      // attacker, target card (nullable)
-        public static event Action<Card, PlayerState> OnAttackOnPlayer; // attacker, defending player
+        public static event Action<Card, Card> OnAttackDeclared;
+        public static event Action<Card, PlayerState> OnAttackOnPlayer;
         public static event Action<Card, int> OnCreatureDamaged;
         public static event Action<Card> OnCreatureDied;
 
@@ -31,10 +32,18 @@ namespace TCG.Core
         public static event Action<PlayerState, int> OnPlayerHealed;
         public static event Action<PlayerState, int> OnManaChanged;
 
+        // Character & Energy
+        public static event Action<CharacterState, int> OnCharacterDamaged;
+        public static event Action<CharacterState, int> OnCharacterHealed;
+        public static event Action<CharacterState> OnCharacterDied;
+        public static event Action<CharacterState, int> OnEnergyChanged;       // character, newEnergy
+        public static event Action<CharacterState, int> OnAbilityUsed;         // character, abilityIndex
+        public static event Action<CharacterState, int, int> OnAbilityCooldownTicked; // character, index, turnsLeft
+
         // Game
         public static event Action<GameResult> OnGameEnded;
 
-        // Invocations (called by game systems)
+        // Invocations
         public static void PhaseChanged(GamePhase phase) => OnPhaseChanged?.Invoke(phase);
         public static void TurnStarted(PlayerState p) => OnTurnStarted?.Invoke(p);
         public static void TurnEnded(PlayerState p) => OnTurnEnded?.Invoke(p);
@@ -52,6 +61,13 @@ namespace TCG.Core
         public static void PlayerDamaged(PlayerState p, int dmg) => OnPlayerDamaged?.Invoke(p, dmg);
         public static void PlayerHealed(PlayerState p, int amt) => OnPlayerHealed?.Invoke(p, amt);
         public static void ManaChanged(PlayerState p, int newMana) => OnManaChanged?.Invoke(p, newMana);
+
+        public static void CharacterDamaged(CharacterState c, int dmg) => OnCharacterDamaged?.Invoke(c, dmg);
+        public static void CharacterHealed(CharacterState c, int amt) => OnCharacterHealed?.Invoke(c, amt);
+        public static void CharacterDied(CharacterState c) => OnCharacterDied?.Invoke(c);
+        public static void EnergyChanged(CharacterState c, int e) => OnEnergyChanged?.Invoke(c, e);
+        public static void AbilityUsed(CharacterState c, int idx) => OnAbilityUsed?.Invoke(c, idx);
+        public static void AbilityCooldownTicked(CharacterState c, int idx, int left) => OnAbilityCooldownTicked?.Invoke(c, idx, left);
 
         public static void GameEnded(GameResult result) => OnGameEnded?.Invoke(result);
 
@@ -71,6 +87,12 @@ namespace TCG.Core
             OnPlayerDamaged = null;
             OnPlayerHealed = null;
             OnManaChanged = null;
+            OnCharacterDamaged = null;
+            OnCharacterHealed = null;
+            OnCharacterDied = null;
+            OnEnergyChanged = null;
+            OnAbilityUsed = null;
+            OnAbilityCooldownTicked = null;
             OnGameEnded = null;
         }
     }

@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using TCG.Cards;
+using TCG.Characters;
 using TCG.Core;
 using TCG.Game;
 using TCG.Player;
@@ -16,8 +17,15 @@ public class GameManager : MonoBehaviour
     public List<CardData> player1DeckConfig = new List<CardData>();
     public List<CardData> player2DeckConfig = new List<CardData>();
 
-    [Header("Card Prefab")]
+    [Header("Character Config (optional)")]
+    public CharacterData player1CharacterData;
+    public CharacterData player2CharacterData;
+
+    [Header("Prefabs")]
     public TCG.Cards.Card cardPrefab;
+
+    // Expose prefab for CharacterAbilityResolver token spawning
+    public TCG.Cards.Card CardPrefab => cardPrefab;
 
     // Systems
     public TurnManager Turns { get; private set; }
@@ -57,6 +65,9 @@ public class GameManager : MonoBehaviour
         Player1 = new PlayerState("p1", p1Name, isLocal: true);
         Player2 = new PlayerState("p2", p2Name, isLocal: false);
 
+        InitCharacter(Player1, player1CharacterData);
+        InitCharacter(Player2, player2CharacterData);
+
         BuildDeck(Player1, player1DeckConfig);
         BuildDeck(Player2, player2DeckConfig);
 
@@ -74,6 +85,13 @@ public class GameManager : MonoBehaviour
         GameEvents.OnGameEnded += OnGameEnded;
 
         Turns.StartFirstTurn();
+    }
+
+    private void InitCharacter(PlayerState player, CharacterData data)
+    {
+        if (data == null) return;
+        var character = new CharacterState(data, player);
+        player.AssignCharacter(character);
     }
 
     private void BuildDeck(PlayerState player, List<CardData> config)

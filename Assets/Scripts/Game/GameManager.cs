@@ -23,12 +23,11 @@ public class GameManager : MonoBehaviour
 
     [Header("Prefabs")]
     public TCG.Cards.Card cardPrefab;
-
-    // Expose prefab for CharacterAbilityResolver token spawning
     public TCG.Cards.Card CardPrefab => cardPrefab;
 
     // Systems
     public TurnManager Turns { get; private set; }
+    public CombatManager Combat { get; private set; }
     public BattleManager Battle { get; private set; }
 
     // Players
@@ -44,10 +43,7 @@ public class GameManager : MonoBehaviour
         Instance = this;
     }
 
-    private void Start()
-    {
-        StartGame("Player1", "Player2");
-    }
+    private void Start() => StartGame("Player1", "Player2");
 
     private void OnDestroy()
     {
@@ -58,12 +54,14 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ── Game lifecycle ────────────────────────────────────────────────────
+    // ── Game lifecycle ─────────────────────────────────────────────────────
 
     public void StartGame(string p1Name, string p2Name)
     {
-        Player1 = new PlayerState("p1", p1Name, isLocal: true);
-        Player2 = new PlayerState("p2", p2Name, isLocal: false);
+        StatusEffectProcessor.Reset();
+
+        Player1 = new PlayerState("p1", p1Name, isLocal: true, isPlayer1: true);
+        Player2 = new PlayerState("p2", p2Name, isLocal: false, isPlayer1: false);
 
         InitCharacter(Player1, player1CharacterData);
         InitCharacter(Player2, player2CharacterData);
@@ -77,9 +75,10 @@ public class GameManager : MonoBehaviour
         Player1.DrawStartingHand();
         Player2.DrawStartingHand();
 
-        Turns = new TurnManager();
+        Combat = new CombatManager();
         Battle = new BattleManager();
-        Turns.Initialize(Player1, Player2);
+        Turns = new TurnManager();
+        Turns.Initialize(Player1, Player2, Combat);
 
         GameEvents.OnPlayerDamaged += CheckWinCondition;
         GameEvents.OnGameEnded += OnGameEnded;
@@ -90,8 +89,7 @@ public class GameManager : MonoBehaviour
     private void InitCharacter(PlayerState player, CharacterData data)
     {
         if (data == null) return;
-        var character = new CharacterState(data, player);
-        player.AssignCharacter(character);
+        player.AssignCharacter(new CharacterState(data, player));
     }
 
     private void BuildDeck(PlayerState player, List<CardData> config)
@@ -108,10 +106,8 @@ public class GameManager : MonoBehaviour
 
     private void CheckWinCondition(PlayerState damaged, int _)
     {
-        if (!Player1.IsAlive)
-            DeclareResult(GameResult.Player2Win);
-        else if (!Player2.IsAlive)
-            DeclareResult(GameResult.Player1Win);
+        if (!Player1.IsAlive) DeclareResult(GameResult.Player2Win);
+        else if (!Player2.IsAlive) DeclareResult(GameResult.Player1Win);
     }
 
     public void DeclareResult(GameResult result)
@@ -134,8 +130,6 @@ public class GameManager : MonoBehaviour
 
     // ── Helpers ────────────────────────────────────────────────────────────
 
-    public PlayerState GetOpponent(PlayerState player)
-    {
-        return player == Player1 ? Player2 : Player1;
-    }
+    public PlayerState GetOpponent(PlayerState player) =>
+        player == Player1 ? Player2 : Player1;
 }

@@ -49,6 +49,10 @@ namespace TCG.Network
         public NetworkVariable<int> ActivePlayerIndex = new NetworkVariable<int>(0,
             NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+        public NetworkVariable<BattleSubPhase> CurrentBattleSubPhase =
+            new NetworkVariable<BattleSubPhase>(BattleSubPhase.Idle,
+                NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
         private Dictionary<ulong, int> _clientPlayerMap = new Dictionary<ulong, int>();
 
         public override void OnNetworkSpawn()
@@ -66,6 +70,7 @@ namespace TCG.Network
             GameEvents.OnEnergyChanged += SyncEnergy;
             GameEvents.OnCharacterDamaged += SyncCharacterHealth;
             GameEvents.OnAbilityCooldownTicked += SyncAbilityCooldowns;
+            GameEvents.OnBattleSubPhaseChanged += SyncBattleSubPhase;
         }
 
         public override void OnNetworkDespawn()
@@ -79,6 +84,7 @@ namespace TCG.Network
             GameEvents.OnEnergyChanged -= SyncEnergy;
             GameEvents.OnCharacterDamaged -= SyncCharacterHealth;
             GameEvents.OnAbilityCooldownTicked -= SyncAbilityCooldowns;
+            GameEvents.OnBattleSubPhaseChanged -= SyncBattleSubPhase;
 
             if (IsServer)
                 NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
@@ -134,27 +140,81 @@ namespace TCG.Network
             SyncBoardStateClientRpc();
         }
 
+        // ── Combat flow (blocker system) ────────────────────────────────────
+
+        /// <summary>Active player toggles a creature in/out of the attacker list.</summary>
         [ServerRpc(RequireOwnership = false)]
-        public void DeclareAttackServerRpc(int attackerIndex, int targetIndex, bool targetIsPlayer,
+        public void ToggleAttackerServerRpc(int creatureIndex, ServerRpcParams rpcParams = default)
+        {
+            if (!IsServer) return;
+            var player = GetPlayer(rpcParams);
+            if (GameManager.Instance.ActivePlayer != player) return;
+
+            var creatures = player.Field.Creatures;
+            if (creatureIndex < 0 || creatureIndex >= creatures.Count) return;
+
+            GameManager.Instance.Turns.ToggleAttacker(creatures[creatureIndex]);
+            SyncBoardStateClientRpc();
+        }
+
+        /// <summary>Active player confirms their attacker list → defender can now block.</summary>
+        [ServerRpc(RequireOwnership = false)]
+        public void ConfirmAttackersServerRpc(ServerRpcParams rpcParams = default)
+        {
+            if (!IsServer) return;
+            var player = GetPlayer(rpcParams);
+            if (GameManager.Instance.ActivePlayer != player) return;
+
+            GameManager.Instance.Turns.ConfirmAttackers();
+            SyncBoardStateClientRpc();
+        }
+
+        /// <summary>
+        /// Defending player assigns one of their creatures as a blocker.
+        /// blockerIndex = index in defending player's field.
+        /// attackerIndex = index in attacking player's CombatState.DeclaredAttackers.
+        /// </summary>
+        [ServerRpc(RequireOwnership = false)]
+        public void AssignBlockerServerRpc(int blockerIndex, int attackerIndex,
             ServerRpcParams rpcParams = default)
         {
             if (!IsServer) return;
             var player = GetPlayer(rpcParams);
-            var opponent = GameManager.Instance.GetOpponent(player);
+            var activePlayer = GameManager.Instance.ActivePlayer;
+            if (player == activePlayer) return; // only defender can block
 
-            var attackers = player.Field.Creatures;
-            if (attackerIndex < 0 || attackerIndex >= attackers.Count) return;
-            var attacker = attackers[attackerIndex];
+            var defenderField = player.Field.Creatures;
+            if (blockerIndex < 0 || blockerIndex >= defenderField.Count) return;
 
-            if (targetIsPlayer)
-                GameManager.Instance.Battle.ResolvePlayerAttack(attacker, opponent);
-            else
-            {
-                var targets = opponent.Field.Creatures;
-                if (targetIndex < 0 || targetIndex >= targets.Count) return;
-                GameManager.Instance.Battle.ResolveCombat(attacker, targets[targetIndex]);
-            }
+            var combat = GameManager.Instance.Combat.Current;
+            if (combat == null || attackerIndex < 0 || attackerIndex >= combat.DeclaredAttackers.Count) return;
 
+            GameManager.Instance.Turns.AssignBlocker(
+                defenderField[blockerIndex],
+                combat.DeclaredAttackers[attackerIndex]);
+            SyncBoardStateClientRpc();
+        }
+
+        /// <summary>Defending player locks in all blocker assignments → combat resolves.</summary>
+        [ServerRpc(RequireOwnership = false)]
+        public void ConfirmBlockersServerRpc(ServerRpcParams rpcParams = default)
+        {
+            if (!IsServer) return;
+            var player = GetPlayer(rpcParams);
+            if (player == GameManager.Instance.ActivePlayer) return; // only defender
+
+            GameManager.Instance.Turns.ConfirmBlockers();
+            SyncBoardStateClientRpc();
+        }
+
+        /// <summary>Active player passes on attacking entirely.</summary>
+        [ServerRpc(RequireOwnership = false)]
+        public void SkipBattlePhaseServerRpc(ServerRpcParams rpcParams = default)
+        {
+            if (!IsServer) return;
+            var player = GetPlayer(rpcParams);
+            if (GameManager.Instance.ActivePlayer != player) return;
+            GameManager.Instance.Turns.SkipBattlePhase();
             SyncBoardStateClientRpc();
         }
 
@@ -261,6 +321,12 @@ namespace TCG.Network
         {
             if (!IsServer) return;
             CurrentPhase.Value = phase;
+        }
+
+        private void SyncBattleSubPhase(BattleSubPhase sub)
+        {
+            if (!IsServer) return;
+            CurrentBattleSubPhase.Value = sub;
         }
 
         private void SyncActivePlayer(TCG.Player.PlayerState player)

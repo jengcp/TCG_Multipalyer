@@ -79,8 +79,41 @@ namespace TCG.Core
         Deck,
         Hand,
         Field,
+        ArtifactZone,
+        TrapZone,
         Graveyard,
         Exile
+    }
+
+    // ── Combat sub-phases ─────────────────────────────────────────────────
+
+    public enum BattleSubPhase
+    {
+        Idle,
+        DeclareAttackers,   // active player picks attackers
+        DeclareBlockers,    // defending player assigns blockers
+        ResolveCombat       // server resolves all assignments
+    }
+
+    // ── Trap triggers ─────────────────────────────────────────────────────
+
+    public enum TrapTrigger
+    {
+        OnCreatureAttacks,
+        OnCreaturePlayed,
+        OnSpellPlayed,
+        OnPlayerDamaged,
+        OnTurnStart,
+        OnCreatureDies
+    }
+
+    // ── Fatigue / special draw results ────────────────────────────────────
+
+    public enum DrawResult
+    {
+        Success,
+        HandFull,
+        FatigueDamage   // deck was empty — player took damage instead
     }
 
     public enum GameResult

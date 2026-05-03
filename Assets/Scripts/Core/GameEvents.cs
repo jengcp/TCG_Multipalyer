@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using TCG.Cards;
 using TCG.Characters;
 using TCG.Player;
@@ -26,6 +27,18 @@ namespace TCG.Core
         public static event Action<Card, PlayerState> OnAttackOnPlayer;
         public static event Action<Card, int> OnCreatureDamaged;
         public static event Action<Card> OnCreatureDied;
+
+        // Combat flow (blocker system)
+        public static event Action<BattleSubPhase> OnBattleSubPhaseChanged;
+        public static event Action<List<Card>> OnAttackersDeclared;           // final list
+        public static event Action<Card, Card> OnBlockerAssigned;             // blocker, attacker
+        public static event Action OnBlockersConfirmed;
+        public static event Action<PlayerState, DrawResult, int> OnDrawAttempt; // player, result, fatigueDmg
+
+        // Trap / Artifact
+        public static event Action<Card, PlayerState> OnTrapSet;
+        public static event Action<Card, PlayerState, TrapTrigger> OnTrapTriggered;
+        public static event Action<Card, PlayerState> OnArtifactPlayed;
 
         // Player
         public static event Action<PlayerState, int> OnPlayerDamaged;
@@ -58,6 +71,16 @@ namespace TCG.Core
         public static void CreatureDamaged(Card c, int dmg) => OnCreatureDamaged?.Invoke(c, dmg);
         public static void CreatureDied(Card c) => OnCreatureDied?.Invoke(c);
 
+        public static void BattleSubPhaseChanged(BattleSubPhase p) => OnBattleSubPhaseChanged?.Invoke(p);
+        public static void AttackersDeclared(List<Card> list) => OnAttackersDeclared?.Invoke(list);
+        public static void BlockerAssigned(Card blocker, Card attacker) => OnBlockerAssigned?.Invoke(blocker, attacker);
+        public static void BlockersConfirmed() => OnBlockersConfirmed?.Invoke();
+        public static void DrawAttempt(PlayerState p, DrawResult r, int dmg = 0) => OnDrawAttempt?.Invoke(p, r, dmg);
+
+        public static void TrapSet(Card c, PlayerState p) => OnTrapSet?.Invoke(c, p);
+        public static void TrapTriggered(Card c, PlayerState p, TrapTrigger t) => OnTrapTriggered?.Invoke(c, p, t);
+        public static void ArtifactPlayed(Card c, PlayerState p) => OnArtifactPlayed?.Invoke(c, p);
+
         public static void PlayerDamaged(PlayerState p, int dmg) => OnPlayerDamaged?.Invoke(p, dmg);
         public static void PlayerHealed(PlayerState p, int amt) => OnPlayerHealed?.Invoke(p, amt);
         public static void ManaChanged(PlayerState p, int newMana) => OnManaChanged?.Invoke(p, newMana);
@@ -84,6 +107,14 @@ namespace TCG.Core
             OnAttackOnPlayer = null;
             OnCreatureDamaged = null;
             OnCreatureDied = null;
+            OnBattleSubPhaseChanged = null;
+            OnAttackersDeclared = null;
+            OnBlockerAssigned = null;
+            OnBlockersConfirmed = null;
+            OnDrawAttempt = null;
+            OnTrapSet = null;
+            OnTrapTriggered = null;
+            OnArtifactPlayed = null;
             OnPlayerDamaged = null;
             OnPlayerHealed = null;
             OnManaChanged = null;

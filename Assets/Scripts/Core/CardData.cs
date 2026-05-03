@@ -36,6 +36,14 @@ namespace TCG.Core
         public bool hasVigilance;
         public bool hasFlying;
         public bool hasTaunt;
+        public bool hasHaste;       // can attack the turn it is played
+        public bool hasRegenerate;  // survives death once per turn (refresh each turn start)
+
+        [Header("Trap Trigger (Traps only)")]
+        public TrapTrigger trapTrigger;
+
+        [Header("Artifact — Passive Effect Timing")]
+        public bool artifactTriggersEachTurn; // true = onPlayEffects fire every turn start
 
         public bool IsCreature => cardType == CardType.Creature;
         public bool IsSpell => cardType == CardType.Spell;
